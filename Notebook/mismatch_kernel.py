@@ -45,8 +45,8 @@ def embed(X, k, m):
 
 def mismatch_kernel(X, k, m, Y=None, normalize=True):
     """
-    Compute the mismatch_kernel(k,m) matrix of (X,Y) for m=0 or m=1.
-    Should parse the datasets almost instantaneously for m=0 (spectrum kernel) 
+    Compute the (k,m)-mismatch_kernel matrix of (X,Y) for m=0 or m=1.
+    Processes the datasets almost instantaneously for m=0 (spectrum kernel) 
     and in less than 10 seconds for m=1 (whatever k).
     X : list[np.array[dtype=np.int32]] can be obtained as X = preprocess(iterable[str]).
     """

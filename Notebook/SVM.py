@@ -4,13 +4,11 @@ from cvxopt import matrix, solvers
 solvers.options['show_progress'] = False
 
 class SVM():
-    """
-    SVM implementation
-    
+    """  
     Usage:
-        svm = SVM(C=1)
+        svm = SVM(C=C)
         svm.fit(kernel(X_train, X_train), y_train)
-        svm.predict_classes(kernel(X_test, X_train))
+        svm.predict(kernel(X_test, X_train))
     """
 
     def __init__(self, C=1.0):
