@@ -3,3 +3,4 @@ pandas
 tqdm
 numba
 scipy
+cvxopt

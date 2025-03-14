@@ -30,4 +30,3 @@ class SVM():
     def predict(self, K):
         y = np.dot(K, self.alphas)
         return 2*(y > 0) - 1
-

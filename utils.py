@@ -30,11 +30,6 @@ def SpectrumEmbedding(X, list_k, train=True, X_train=None):
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
-import numpy as np
-
-def sigmoid(x):
-    return 1 / (1 + np.exp(-x))
-
 class KernelLogisticRegression:
     def __init__(self, kernel, preprocessing=None, normalization=None,
                  dropout=None, maxi=False, lamda=1, max_iter=15, verbose=True):

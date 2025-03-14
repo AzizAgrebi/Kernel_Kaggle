@@ -1,17 +1,16 @@
 import numpy as np
-
 from scipy.sparse import coo_matrix
 from numba import njit
 
 def preprocess(X):
     tf = {c:i for i,c in enumerate('ATCG')}
-    return [np.array([tf[c] for c in x], dtype=np.int32) for x in X]
+    return [np.array([tf[c] for c in x]) for x in X]
 
 @njit
 def kmer_id(kmer):
-    id = np.int32(0)
+    id = 0
     for c in kmer:
-        id = (id << 2) ^ c     # id = 4 * id + c 
+        id = (id << 2) ^ c   # id = 4 * id + c 
     return id
 
 @njit
@@ -27,9 +26,9 @@ def extract_kmers(x, k, m=0):
         count += 1
 
         if m == 1:
-            for pos in range(k):
+            for pos in range(0, 2*k, 2):
                 for c in range(4):
-                    neigh_id = (id & (~(3 << (pos << 1)))) | (c << (pos << 1))
+                    neigh_id = (id & ~(0b11 << pos)) | (c << pos)
                     if neigh_id != id:
                         kmer_ids[count] = neigh_id
                         count += 1
@@ -39,16 +38,19 @@ def embed(X, k, m):
     kmers = [extract_kmers(x, k, m) for x in X]
     n, d = len(kmers), len(kmers[0])
     data = np.ones(n * d, dtype=np.float32)
-    rows = np.repeat(np.arange(n),d)
+    rows = np.repeat(np.arange(n, dtype=np.int32),d)
     cols = np.hstack(kmers)
     return coo_matrix((data, (rows, cols)), shape=(n, 4**k))
 
 def mismatch_kernel(X, k, m, Y=None, normalize=True):
     """
     Compute the (k,m)-mismatch_kernel matrix of (X,Y) for m=0 or m=1.
-    Processes the datasets almost instantaneously for m=0 (spectrum kernel) 
-    and in less than 10 seconds for m=1 (whatever k).
-    X : list[np.array[dtype=np.int32]] can be obtained as X = preprocess(iterable[str]).
+
+    X : list[np.array[np.int64]]. Obtained with X = preprocess( iterable[DNA_strings] ).
+
+    Remark: After the first call which JIT compiles, computing mismatch_kernel(Xtrk.csv,k,m)
+    should be almost instantaneous for m=0 (spectrum kernel) and sould take less than 10s 
+    for m=1 (whatever the value of k).
     """
     if Y is None:
         X_emb = embed(X, k, m)
@@ -64,3 +66,20 @@ def mismatch_kernel(X, k, m, Y=None, normalize=True):
             K /= np.sqrt(np.array(X_emb.power(2).sum(axis=1)))
             K /= np.sqrt(np.array(Y_emb.power(2).sum(axis=1))).flatten()
         return K
+
+
+# Test: comparison with the strkernel library's implementation.
+if __name__ == "__main__":
+    from strkernel.mismatch_kernel import MismatchKernel
+
+    rng = np.random.default_rng(123)
+    X = [''.join(rng.choice(list('ATCG'), size=101)) for _ in range(20)]
+    X = preprocess(X)
+
+    k = 6
+    print('For a random dataset, largest difference with the strkernel implementation:')
+    for m in [0,1]:
+        K1 = MismatchKernel(k=k, m=m, l=4).get_kernel(X, normalize=True).kernel
+        K2 = mismatch_kernel(X, k, m, normalize=True)
+        print(f'    {(k,m)=}: {np.max(np.abs(K2 - K1)):.2e}')
+    print('The very small difference is due to our use of float32 instead of float64.')

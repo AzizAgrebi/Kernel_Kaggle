@@ -1,4 +1,4 @@
-# Kernel_Kaggle
+# Kaggle Challenge : Kernel Methods for DNA Sequences
 
 Run the following commands to obtain Yte.csv
 
